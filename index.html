@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>深圳办公室 V17 · 0.30 米 NavMesh · 筛选后数据质检</title>
+  <style>
+    :root { color-scheme: light; --ink:#18211d; --muted:#66706b; --line:#dfe5e1; --paper:#f5f7f5; --card:#fff; --green:#176f58; --amber:#a15c00; --red:#a83232; --blue:#245a78; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+    .report-header, .report-nav, main, footer { width:min(1240px, calc(100% - 32px)); margin:auto; }
+    .report-header { display:flex; align-items:flex-end; justify-content:space-between; gap:28px; padding:56px 0 30px; }
+    .eyebrow { margin:0 0 6px; color:var(--green); font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    h1 { margin:0; max-width:900px; font-size:clamp(28px,4vw,46px); line-height:1.16; letter-spacing:-.035em; }
+    .subtitle { max-width:860px; margin:14px 0 0; color:var(--muted); font-size:17px; }
+    .report-nav { display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-bottom:20px; padding:11px 12px; border:1px solid #c9d8d2; border-radius:14px; background:linear-gradient(90deg,#eaf5f0,#f7faf8); box-shadow:0 3px 10px #1833290c; }
+    .report-nav-label { display:inline-flex; align-items:center; min-height:38px; padding:0 13px; border-radius:9px; background:var(--green); color:#fff; font-size:14px; font-weight:800; letter-spacing:.02em; white-space:nowrap; }
+    .report-nav a { display:inline-flex; align-items:center; gap:6px; min-height:38px; padding:7px 13px; border:1px solid #abc3b7; border-radius:9px; background:#fff; color:#145476; text-decoration:none; font-size:14px; font-weight:750; box-shadow:0 1px 2px #18332912; transition:transform .12s ease,background .12s ease,box-shadow .12s ease; }
+    .report-nav a::before { content:"↓"; color:var(--green); font-weight:900; }
+    .report-nav a[href$=".html"]::before { content:"↗"; }
+    .report-nav a:hover,.report-nav a:focus-visible { background:#e8f4ef; box-shadow:0 3px 9px #18332920; outline:none; transform:translateY(-1px); }
+    .public-local-note { display:inline-flex; align-items:center; min-height:38px; padding:7px 13px; border:1px dashed #aeb9b4; border-radius:9px; color:var(--muted); font-size:13px; font-weight:650; background:#fbfcfb; }
+    .verdict { min-width:132px; padding:14px 18px; border-radius:14px; color:#fff; text-align:center; }
+    .verdict span { display:block; opacity:.8; font-size:12px; }
+    .verdict strong { display:block; font-size:20px; }
+    .verdict.pass { background:var(--green); } .verdict.conditional { background:var(--amber); } .verdict.fail { background:var(--red); }
+    section { margin:0 0 24px; padding:28px; background:var(--card); border:1px solid var(--line); border-radius:18px; }
+    h2 { margin:0 0 20px; font-size:23px; line-height:1.3; letter-spacing:-.02em; }
+    h3 { margin:0; font-size:16px; line-height:1.4; }
+    .section-intro, .caption { color:var(--muted); }
+    .kpis { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
+    .kpis > div { padding:16px; background:#f7f9f7; border-radius:12px; }
+    .kpis span, .kpis small { display:block; color:var(--muted); }
+    .kpis strong { display:block; margin:3px 0 1px; font-size:28px; line-height:1.2; font-variant-numeric:tabular-nums; }
+    .findings { display:grid; gap:10px; margin-top:20px; }
+    .finding { padding:15px 18px; border-left:4px solid var(--line); background:#fafbfa; border-radius:8px 12px 12px 8px; }
+    .finding.critical { border-color:var(--red); background:#fff7f6; } .finding.warning { border-color:var(--amber); background:#fffaf1; } .finding.info { border-color:var(--blue); background:#f5f9fc; } .finding.ok { border-color:var(--green); background:#f4faf7; }
+    .finding-head { display:flex; align-items:center; gap:10px; }
+    .finding-head span, .example-role, .table-status { display:inline-block; border-radius:999px; padding:2px 9px; font-size:12px; font-weight:700; white-space:nowrap; }
+    .finding.critical .finding-head span { background:#f4d7d4; color:var(--red); } .finding.warning .finding-head span { background:#f3e3c4; color:#7a4500; } .finding.info .finding-head span { background:#dceaf2; color:var(--blue); } .finding.ok .finding-head span { background:#d8ede4; color:var(--green); }
+    .finding p { margin:6px 0 0; } .finding .action { color:var(--muted); }
+    .record-id-groups { margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); }
+    .record-id-groups > p { margin:0 0 4px; color:var(--muted); font-size:12px; }
+    .record-id-group { padding:9px 0; }
+    .record-id-group summary { display:flex; justify-content:space-between; gap:14px; color:var(--blue); }
+    .record-id-group summary strong { padding:1px 8px; border-radius:999px; background:#e5edf2; color:var(--blue); font-size:12px; font-variant-numeric:tabular-nums; }
+    .finding.warning .record-id-group summary strong { background:#f3e3c4; color:#7a4500; }
+    .finding.critical .record-id-group summary strong { background:#f4d7d4; color:var(--red); }
+    .record-id-group pre { max-height:360px; margin:8px 0 0; padding:12px; overflow:auto; border:1px solid var(--line); border-radius:8px; background:#fff; color:#36423c; font:11.5px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre; }
+    .anomaly-overview { margin-top:22px; padding-top:20px; border-top:1px solid var(--line); }
+    .anomaly-overview > h3 { font-size:18px; }
+    .anomaly-overview > p { margin:5px 0 12px; color:var(--muted); font-size:13px; }
+    .anomaly-count-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; }
+    .anomaly-count { min-width:0; padding:13px 14px; border:1px solid #c7d9e4; border-top:4px solid var(--blue); border-radius:10px; background:#f3f8fb; }
+    .anomaly-count span, .anomaly-count small { display:block; color:var(--muted); }
+    .anomaly-count strong { display:block; margin:3px 0 1px; color:var(--blue); font-size:25px; line-height:1.2; font-variant-numeric:tabular-nums; }
+    .anomaly-count.critical { border-color:#e8bbb5; border-top-color:var(--red); background:#fff5f4; } .anomaly-count.critical strong { color:var(--red); }
+    .anomaly-count.warning { border-color:#ead2a7; border-top-color:var(--amber); background:#fff9ee; } .anomaly-count.warning strong { color:#8b4d00; }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { padding:11px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+    th { color:var(--muted); font-size:13px; }
+    .table-status.pass { color:var(--green); background:#e2f1ea; } .table-status.warn { color:#7a4500; background:#f5e8cf; } .table-status.fail { color:var(--red); background:#f4d7d4; }
+    .charts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+    .chart { min-width:0; margin:0; padding:18px; border:1px solid #e8ece9; background:#fafbfa; border-radius:14px; }
+    .chart.wide { grid-column:1 / -1; }
+    .chart h3 { margin-bottom:10px; }
+    .chart svg { display:block; width:100%; height:auto; }
+    .chart rect { fill:#5d8c78; } .chart .overflow-bar { fill:#c08a43; } .chart .axis-line { stroke:#8e9993; } .chart .axis, .chart .axis-title, .chart .threshold-label { fill:#66706b; font-size:12px; } .chart .threshold { stroke:var(--red); stroke-width:2; stroke-dasharray:5 4; }
+    .chart .grid-line { stroke:#e1e6e3; stroke-width:1; } .chart .bar-value { fill:#405048; font-size:11px; font-weight:600; }
+    figcaption { margin-top:10px; color:var(--muted); font-size:13px; }
+    .motion-grid, .category-grid { display:grid; grid-template-columns:120px 1fr 142px; align-items:center; gap:8px 10px; }
+    .motion-label span { color:var(--muted); font-size:11px; }
+    .motion-track, .category-track { position:relative; height:10px; overflow:hidden; background:#e5eae7; border-radius:999px; }
+    .motion-fill, .category-track div { height:100%; background:#4c806d; }
+    .motion-track i { position:absolute; top:-2px; bottom:-2px; right:0; width:2px; background:var(--red); }
+    .motion-value, .category-value { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+    .stack-legend { display:flex; flex-wrap:wrap; gap:8px 16px; margin:0 0 14px; color:var(--muted); font-size:12px; }
+    .stack-legend i { display:inline-block; width:9px; height:9px; margin-right:5px; border-radius:3px; }
+    .stack-row { display:grid; grid-template-columns:88px 1fr 160px; align-items:center; gap:10px; margin:9px 0; }
+    .stack-label { font-weight:600; }
+    .stack { display:flex; height:22px; overflow:hidden; border-radius:6px; background:#e5eae7; }
+    .stack span { min-width:0; height:100%; }
+    .stack-note { color:var(--muted); font-size:12px; text-align:right; }
+    .stack-scale { display:flex; justify-content:space-between; margin:2px 170px 0 98px; color:var(--muted); font-size:11px; }
+    .stack-scale span { transform:translateX(-50%); } .stack-scale span:first-child { transform:none; } .stack-scale span:last-child { transform:translateX(50%); }
+    .c0 { background:#32725e; } .c1 { background:#72a38f; } .c2 { background:#e0a34a; } .c3 { background:#c45b49; } .c4 { background:#807b8d; }
+    .metric-table td:not(:first-child), .metric-table th:not(:first-child) { text-align:right; font-variant-numeric:tabular-nums; }
+    .example-group { margin:24px 0 0; padding:0; border:0; }
+    .example-group > h3 { margin-bottom:12px; color:var(--muted); font-size:14px; text-transform:uppercase; letter-spacing:.05em; }
+    .example { margin-bottom:16px; padding:20px; border:1px solid var(--line); border-radius:14px; }
+    .example-title { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
+    .example-role { margin-bottom:6px; color:var(--green); background:#e2f1ea; }
+    .example-title h3 { overflow-wrap:anywhere; }
+    .technical-id { display:block; margin-top:3px; color:var(--muted); font:12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace; }
+    .jump { min-height:36px; padding:7px 12px; border:1px solid #bbc6c0; border-radius:8px; background:#fff; color:var(--ink); cursor:pointer; }
+    .example-facts { display:flex; flex-wrap:wrap; gap:6px 16px; margin:12px 0 8px; color:var(--muted); font-size:13px; }
+    .diagnosis { margin:8px 0 14px; }
+    .example-media { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+    video, .example-media img { display:block; width:100%; aspect-ratio:16/9; object-fit:contain; border-radius:10px; }
+    video { background:#111; } .example-media img { background:#f7f8f6; }
+    .media-note { margin:6px 0 0; color:var(--muted); font-size:12px; }
+    .record-link { display:inline-block; margin-top:10px; color:var(--blue); }
+    details { border-top:1px solid var(--line); padding:12px 0; } summary { cursor:pointer; font-weight:600; } dt { margin-top:8px; color:var(--muted); font-size:12px; } dd { margin:0; overflow-wrap:anywhere; }
+    footer { padding:4px 0 44px; color:var(--muted); font-size:13px; }
+    @media (max-width:900px) { .kpis { grid-template-columns:repeat(3,1fr); } .charts { grid-template-columns:1fr; } }
+    @media (max-width:680px) { .report-header { align-items:stretch; flex-direction:column; padding-top:30px; } .verdict { width:100%; } section { padding:20px 16px; } .kpis { grid-template-columns:repeat(2,1fr); } .example-media { grid-template-columns:1fr; } .motion-grid,.category-grid { grid-template-columns:96px 1fr; } .motion-value,.category-value { grid-column:2; margin-top:-7px; } .stack-row { grid-template-columns:72px 1fr; } .stack-note { grid-column:2; text-align:left; } }
+    @media print { body { background:#fff; } .report-header,main,footer { width:100%; } section,.example { break-inside:avoid; box-shadow:none; } video,.jump { display:none; } }
+  
+    .lead{font-size:18px;line-height:1.8}.decision{border-left:5px solid var(--green);background:#f0f8f4;padding:18px 22px;border-radius:12px;margin:16px 0}
+    main p{overflow-wrap:anywhere}main pre{white-space:pre-wrap;overflow-wrap:anywhere}
+    .id-list pre{max-height:320px;overflow:auto;font:12px/1.5 monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f6f8f7;padding:12px}
+    .id-list summary strong{background:#fff0d5;color:#8c5006;border-radius:6px;padding:4px 10px;margin-left:12px}
+    .risk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.risk{border:1px solid #e8d8bd;border-radius:12px;padding:18px;background:#fffdf8}
+    .risk .count{display:inline-block;padding:6px 13px;border-radius:8px;background:#fff0d3;color:#8c5006;font-size:24px;font-weight:750;margin:9px 0}
+    .risk p{margin:7px 0}.muted{color:var(--muted)}.recommended{background:#eef8f2}.tight td{padding:7px 10px}code{font-size:12px;overflow-wrap:anywhere}
+    .report-nav{position:sticky;top:0;z-index:3;background:#f5f7f5ed;padding:8px 0}.example{content-visibility:auto;contain-intrinsic-size:700px}.example-media img{aspect-ratio:auto;height:auto}
+    section[id]{scroll-margin-top:90px}.chart .grouped-bars .axis{font-size:16px}.chart .grouped-bars .axis-title{font-size:15px}
+    @media(max-width:680px){.risk-grid{grid-template-columns:1fr}.report-nav{position:static}} 
+    </style>
+<style>.public-local-note{display:inline-flex;align-items:center;min-height:38px;padding:7px 13px;border:1px dashed #aeb9b4;border-radius:9px;color:#66706b;font-size:13px;font-weight:650;background:#fbfcfb}</style></head>
+<body>
+<header class="report-header"><div><p class="eyebrow">SHENZHEN OFFICE V17 · 当前保留集</p><h1>深圳办公室 V17 · 0.30 米 NavMesh · 筛选后数据质检</h1><p class="subtitle">本报告只分析按低分及可疑线索筛选后保留的 3,516 条路线。速度、视频和地图统计均以这批路线为分母；保留不等于逐条人工验收。</p></div></header><nav class="report-nav" aria-label="报告快速跳转"><span class="report-nav-label">快速跳转</span><a href="tokenizer-k64/">K64 动作空间报告 ↗</a><a href="#overview">当前结论</a><a href="#selection">筛除摘要</a><a href="#speed">速度</a><a href="#space">覆盖与重复</a><a href="#quality">质量与边界</a><a href="#examples">视频样例</a><a href="statistics.html">完整分布</a><span class="public-local-note">人工质检台仅限内网访问</span></nav><main><section id="overview"><h2>当前数据概况</h2><div class="kpis"><div><span>当前路线</span><strong>3,516</strong><small>1 个场景</small></div><div><span>视频总量</span><strong>28.75 h</strong><small>按实际帧数及帧率</small></div><div><span>参考均分</span><strong>9.83/10</strong><small>沿用筛选前评分</small></div><div><span>长度中位数</span><strong>20.7 m</strong><small>P95 39.7 米</small></div><div><span>30 米以上</span><strong>775</strong><small>最长 51.3 米</small></div></div><div class="decision">这批路线覆盖完整可通行网格的 93.83%（按 0.30 米机器人半径膨胀）；775 条超过 30 米。严格同向近重复为 4 对。含停转的区间均速为 0.739 米/秒，超过本批 2 米/秒约束 1% 容差的区间为 0 个。</div><p>参考分最低值仍是自动口径，不代表人工通过率。下面的范围上沿样例用于观察边界，不产生新的黑名单。</p></section><section id="selection"><h2>本轮筛除摘要</h2><div class="table-wrap"><table><thead><tr><th>范围</th><th>路线数</th><th>视频小时</th></tr></thead><tbody><tr><td>筛选前完成集</td><td>4,008</td><td>33.0217</td></tr><tr><td>本轮去重排除</td><td>492</td><td>4.2686</td></tr><tr><td>当前保留集</td><td>3,516</td><td>28.7531</td></tr></tbody></table></div><p>质量分低于 8 的路线与既有可疑队列按 ID 取并集排除；统计、示例与动作编码均只使用剩余数据。</p><p>使用相同完整地图分母，轨迹膨胀覆盖从 94.628% 降至 93.832%，减少 0.797 个百分点，约 10.188 平方米。这是删样后的覆盖代价；后续地图与统计仅展示当前保留集。</p><p><a href="dataset_manifest.json" download>下载动作编码后的完整数据清单</a>。路线、视频、Planner 记录和动作编码均对应同一批保留 ID。</p><details><summary>查看本轮删除依据与数量</summary><p>原因可以重叠，以下条数不能直接相加；这些决定仅适用于本轮冻结清单。</p><div class="table-wrap"><table><thead><tr><th>原因</th><th>命中条数</th></tr></thead><tbody><tr><td>质量分低于 8</td><td>119</td></tr><tr><td>既有可疑队列</td><td>390</td></tr><tr><td>两类重合</td><td>17</td></tr><tr><td>去重后排除</td><td>492</td></tr></tbody></table></div></details><details><summary>查看被排除路线的可疑线索</summary><p>同一条路线可能命中多个线索。低对比可能来自白墙或近景，近停可能发生在正常转弯；这里执行的是偏严格筛选，不将代理指标等同于人眼确认的异常。</p><div class="table-wrap"><table><thead><tr><th>线索</th><th>涉及路线</th></tr></thead><tbody><tr><td>补充抽帧低对比：可能近墙或纯色近景，需看片</td><td>203 条</td></tr><tr><td>接近现行末段指标边界</td><td>133 条</td></tr><tr><td>单位距离内多次近停：需区分正常弯道减速</td><td>83 条</td></tr><tr><td>场景与长度分层内相对低分样例（并非确认异常）</td><td>32 条</td></tr></tbody></table></div></details><span class="public-local-note">逐轨迹明细仅限内网访问</span><span class="public-local-note">逐轨迹明细仅限内网访问</span></section><section id="speed"><style>#speed .charts>.chart{grid-column:1/-1}#speed figure{min-width:0;overflow-x:auto}#speed .grouped-bars{min-width:640px}#speed .grouped-bars .axis{font-size:11px}
+    .lead{font-size:18px;line-height:1.8}.decision{border-left:5px solid var(--green);background:#f0f8f4;padding:18px 22px;border-radius:12px;margin:16px 0}
+    main p{overflow-wrap:anywhere}main pre{white-space:pre-wrap;overflow-wrap:anywhere}
+    .id-list pre{max-height:320px;overflow:auto;font:12px/1.5 monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f6f8f7;padding:12px}
+    .id-list summary strong{background:#fff0d5;color:#8c5006;border-radius:6px;padding:4px 10px;margin-left:12px}
+    .risk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.risk{border:1px solid #e8d8bd;border-radius:12px;padding:18px;background:#fffdf8}
+    .risk .count{display:inline-block;padding:6px 13px;border-radius:8px;background:#fff0d3;color:#8c5006;font-size:24px;font-weight:750;margin:9px 0}
+    .risk p{margin:7px 0}.muted{color:var(--muted)}.recommended{background:#eef8f2}.tight td{padding:7px 10px}code{font-size:12px;overflow-wrap:anywhere}
+    .report-nav{position:sticky;top:0;z-index:3;background:#f5f7f5ed;padding:8px 0}.example{content-visibility:auto;contain-intrinsic-size:700px}.example-media img{aspect-ratio:auto;height:auto}
+    section[id]{scroll-margin-top:90px}.chart .grouped-bars .axis{font-size:16px}.chart .grouped-bars .axis-title{font-size:15px}
+    @media(max-width:680px){.risk-grid{grid-template-columns:1fr}.report-nav{position:static}} 
+    </style><h2>当前数据的实际速度</h2><div class="decision">累计行驶 75.16 千米；含停转的时间加权均速 0.739 米/秒，移动时均速 0.889 米/秒，最高区间速度 2.000 米/秒。速度≤0.05 米/秒占时长 17.04%。</div><p>仅本报告保留集的 203,506 个相邻位姿区间。速度由水平位移除以时间得到，不是瞬时峰值；移动时均速只计速度 &gt;0.05 米/秒的区间。近停不等于视频冻结。</p><div class="charts"><figure class="chart"><h3>速度区间的耗时与路程</h3><svg class="grouped-bars" viewBox="0 0 800 340" role="img" aria-label="速度区间的耗时与路程"><line class="grid-line" x1="112" x2="784" y1="254.0" y2="254.0"/><text class="axis" x="105" y="258.0" text-anchor="end">0</text><line class="grid-line" x1="112" x2="784" y1="197.0" y2="197.0"/><text class="axis" x="105" y="201.0" text-anchor="end">6.25</text><line class="grid-line" x1="112" x2="784" y1="140.0" y2="140.0"/><text class="axis" x="105" y="144.0" text-anchor="end">12.5</text><line class="grid-line" x1="112" x2="784" y1="83.0" y2="83.0"/><text class="axis" x="105" y="87.0" text-anchor="end">18.75</text><line class="grid-line" x1="112" x2="784" y1="26.0" y2="26.0"/><text class="axis" x="105" y="30.0" text-anchor="end">25</text><path d="M 112 26 V 254 H 784" fill="none" class="axis-line"/><rect style="fill:#8a979e" x="118.20" y="123.73" width="17.64" height="130.27" rx="2"><title>≤.01 · 时间占比：14.284 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="169.90" y="228.85" width="17.64" height="25.15" rx="2"><title>.01–.05 · 时间占比：2.758 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="221.59" y="207.99" width="17.64" height="46.01" rx="2"><title>.05–.2 · 时间占比：5.045 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="273.28" y="125.97" width="17.64" height="128.03" rx="2"><title>.2–.4 · 时间占比：14.038 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="324.97" y="131.77" width="17.64" height="122.23" rx="2"><title>.4–.6 · 时间占比：13.402 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="376.66" y="164.46" width="17.64" height="89.54" rx="2"><title>.6–.8 · 时间占比：9.818 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="428.36" y="158.40" width="17.64" height="95.60" rx="2"><title>.8–1 · 时间占比：10.483 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="480.05" y="176.69" width="17.64" height="77.31" rx="2"><title>1–1.2 · 时间占比：8.477 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="531.74" y="210.59" width="17.64" height="43.41" rx="2"><title>1.2–1.4 · 时间占比：4.760 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="583.43" y="219.41" width="17.64" height="34.59" rx="2"><title>1.4–1.6 · 时间占比：3.793 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="635.13" y="219.17" width="17.64" height="34.83" rx="2"><title>1.6–1.8 · 时间占比：3.819 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="686.82" y="168.96" width="17.64" height="85.04" rx="2"><title>1.8–2 · 时间占比：9.325 占各自总量（%）</title></rect><rect style="fill:#8a979e" x="738.51" y="254.00" width="17.64" height="0.00" rx="2"><title>&gt;2 · 时间占比：0.000 占各自总量（%）</title></rect><rect style="fill:#438da0" x="137.85" y="253.82" width="17.64" height="0.18" rx="2"><title>≤.01 · 距离占比：0.020 占各自总量（%）</title></rect><rect style="fill:#438da0" x="189.54" y="253.15" width="17.64" height="0.85" rx="2"><title>.01–.05 · 距离占比：0.093 占各自总量（%）</title></rect><rect style="fill:#438da0" x="241.23" y="246.96" width="17.64" height="7.04" rx="2"><title>.05–.2 · 距离占比：0.771 占各自总量（%）</title></rect><rect style="fill:#438da0" x="292.92" y="196.31" width="17.64" height="57.69" rx="2"><title>.2–.4 · 距离占比：6.325 占各自总量（%）</title></rect><rect style="fill:#438da0" x="344.62" y="172.35" width="17.64" height="81.65" rx="2"><title>.4–.6 · 距离占比：8.953 占各自总量（%）</title></rect><rect style="fill:#438da0" x="396.31" y="169.11" width="17.64" height="84.89" rx="2"><title>.6–.8 · 距离占比：9.308 占各自总量（%）</title></rect><rect style="fill:#438da0" x="448.00" y="137.36" width="17.64" height="116.64" rx="2"><title>.8–1 · 距离占比：12.790 占各自总量（%）</title></rect><rect style="fill:#438da0" x="499.69" y="140.36" width="17.64" height="113.64" rx="2"><title>1–1.2 · 距离占比：12.460 占各自总量（%）</title></rect><rect style="fill:#438da0" x="551.38" y="177.99" width="17.64" height="76.01" rx="2"><title>1.2–1.4 · 距离占比：8.335 占各自总量（%）</title></rect><rect style="fill:#438da0" x="603.08" y="183.75" width="17.64" height="70.25" rx="2"><title>1.4–1.6 · 距离占比：7.703 占各自总量（%）</title></rect><rect style="fill:#438da0" x="654.77" y="174.06" width="17.64" height="79.94" rx="2"><title>1.6–1.8 · 距离占比：8.765 占各自总量（%）</title></rect><rect style="fill:#438da0" x="706.46" y="30.77" width="17.64" height="223.23" rx="2"><title>1.8–2 · 距离占比：24.477 占各自总量（%）</title></rect><rect style="fill:#438da0" x="758.15" y="254.00" width="17.64" height="0.00" rx="2"><title>&gt;2 · 距离占比：0.000 占各自总量（%）</title></rect><text class="axis" x="137.85" y="278" text-anchor="middle">≤.01</text><text class="axis" x="189.54" y="278" text-anchor="middle">.01–.05</text><text class="axis" x="241.23" y="278" text-anchor="middle">.05–.2</text><text class="axis" x="292.92" y="278" text-anchor="middle">.2–.4</text><text class="axis" x="344.62" y="278" text-anchor="middle">.4–.6</text><text class="axis" x="396.31" y="278" text-anchor="middle">.6–.8</text><text class="axis" x="448.00" y="278" text-anchor="middle">.8–1</text><text class="axis" x="499.69" y="278" text-anchor="middle">1–1.2</text><text class="axis" x="551.38" y="278" text-anchor="middle">1.2–1.4</text><text class="axis" x="603.08" y="278" text-anchor="middle">1.4–1.6</text><text class="axis" x="654.77" y="278" text-anchor="middle">1.6–1.8</text><text class="axis" x="706.46" y="278" text-anchor="middle">1.8–2</text><text class="axis" x="758.15" y="278" text-anchor="middle">&gt;2</text><text class="axis-title" x="19" y="140.0" text-anchor="middle" transform="rotate(-90 19 140.0)">占各自总量（%）</text><circle cx="112" cy="318" r="5" fill="#8a979e"/><text class="axis" x="123" y="322">时间占比</text><circle cx="268" cy="318" r="5" fill="#438da0"/><text class="axis" x="279" y="322">距离占比</text></svg><figcaption>横轴单位为米/秒，各档左开右闭。时间和距离分别归一至100%；高速距离占比反映其实际承担的行程，不按达到过峰值的路线数替代。</figcaption></figure><figure class="chart"><h3>不同长度路线的均速</h3><svg class="grouped-bars" viewBox="0 0 800 340" role="img" aria-label="不同长度路线的均速"><line class="grid-line" x1="112" x2="784" y1="254.0" y2="254.0"/><text class="axis" x="105" y="258.0" text-anchor="end">0</text><line class="grid-line" x1="112" x2="784" y1="197.0" y2="197.0"/><text class="axis" x="105" y="201.0" text-anchor="end">0.375</text><line class="grid-line" x1="112" x2="784" y1="140.0" y2="140.0"/><text class="axis" x="105" y="144.0" text-anchor="end">0.75</text><line class="grid-line" x1="112" x2="784" y1="83.0" y2="83.0"/><text class="axis" x="105" y="87.0" text-anchor="end">1.125</text><line class="grid-line" x1="112" x2="784" y1="26.0" y2="26.0"/><text class="axis" x="105" y="30.0" text-anchor="end">1.5</text><path d="M 112 26 V 254 H 784" fill="none" class="axis-line"/><rect style="fill:#8a979e" x="132.16" y="187.16" width="61.84" height="66.84" rx="2"><title>≤5米 · 含停转均速：0.440 米/秒</title></rect><rect style="fill:#8a979e" x="300.16" y="163.70" width="61.84" height="90.30" rx="2"><title>5–15米 · 含停转均速：0.594 米/秒</title></rect><rect style="fill:#8a979e" x="468.16" y="147.09" width="61.84" height="106.91" rx="2"><title>15–30米 · 含停转均速：0.703 米/秒</title></rect><rect style="fill:#8a979e" x="636.16" y="119.99" width="61.84" height="134.01" rx="2"><title>&gt;30米 · 含停转均速：0.882 米/秒</title></rect><rect style="fill:#438da0" x="196.00" y="162.24" width="61.84" height="91.76" rx="2"><title>≤5米 · 移动时均速：0.604 米/秒</title></rect><rect style="fill:#438da0" x="364.00" y="139.06" width="61.84" height="114.94" rx="2"><title>5–15米 · 移动时均速：0.756 米/秒</title></rect><rect style="fill:#438da0" x="532.00" y="124.42" width="61.84" height="129.58" rx="2"><title>15–30米 · 移动时均速：0.853 米/秒</title></rect><rect style="fill:#438da0" x="700.00" y="99.37" width="61.84" height="154.63" rx="2"><title>&gt;30米 · 移动时均速：1.017 米/秒</title></rect><text class="axis" x="196.00" y="278" text-anchor="middle">≤5米</text><text class="axis" x="364.00" y="278" text-anchor="middle">5–15米</text><text class="axis" x="532.00" y="278" text-anchor="middle">15–30米</text><text class="axis" x="700.00" y="278" text-anchor="middle">&gt;30米</text><text class="axis-title" x="19" y="140.0" text-anchor="middle" transform="rotate(-90 19 140.0)">米/秒</text><circle cx="112" cy="318" r="5" fill="#8a979e"/><text class="axis" x="123" y="322">含停转均速</text><circle cx="268" cy="318" r="5" fill="#438da0"/><text class="axis" x="279" y="322">移动时均速</text></svg><figcaption>按水平路径长度分组，再按各组实际时长加权。各组条数：≤5米 183 条、5–15米 894 条、15–30米 1664 条、&gt;30米 775 条。长路线不因长度单独扣分。</figcaption></figure><figure class="chart"><h3>较高速度承担的任务比例</h3><svg class="grouped-bars" viewBox="0 0 800 340" role="img" aria-label="较高速度承担的任务比例"><line class="grid-line" x1="112" x2="784" y1="254.0" y2="254.0"/><text class="axis" x="105" y="258.0" text-anchor="end">0</text><line class="grid-line" x1="112" x2="784" y1="197.0" y2="197.0"/><text class="axis" x="105" y="201.0" text-anchor="end">25</text><line class="grid-line" x1="112" x2="784" y1="140.0" y2="140.0"/><text class="axis" x="105" y="144.0" text-anchor="end">50</text><line class="grid-line" x1="112" x2="784" y1="83.0" y2="83.0"/><text class="axis" x="105" y="87.0" text-anchor="end">75</text><line class="grid-line" x1="112" x2="784" y1="26.0" y2="26.0"/><text class="axis" x="105" y="30.0" text-anchor="end">100</text><path d="M 112 26 V 254 H 784" fill="none" class="axis-line"/><rect style="fill:#8a979e" x="138.88" y="185.21" width="54.75" height="68.79" rx="2"><title>&gt;1 m/s · 时间占比：30.173 占比（%）</title></rect><rect style="fill:#8a979e" x="362.88" y="219.72" width="54.75" height="34.28" rx="2"><title>&gt;1.5 m/s · 时间占比：15.035 占比（%）</title></rect><rect style="fill:#8a979e" x="586.88" y="232.74" width="54.75" height="21.26" rx="2"><title>&gt;1.8 m/s · 时间占比：9.325 占比（%）</title></rect><rect style="fill:#438da0" x="195.63" y="113.23" width="54.75" height="140.77" rx="2"><title>&gt;1 m/s · 距离占比：61.740 占比（%）</title></rect><rect style="fill:#438da0" x="419.63" y="169.15" width="54.75" height="84.85" rx="2"><title>&gt;1.5 m/s · 距离占比：37.213 占比（%）</title></rect><rect style="fill:#438da0" x="643.63" y="198.19" width="54.75" height="55.81" rx="2"><title>&gt;1.8 m/s · 距离占比：24.477 占比（%）</title></rect><rect style="fill:#267761" x="252.37" y="30.60" width="54.75" height="223.40" rx="2"><title>&gt;1 m/s · 曾达到的路线占比：97.981 占比（%）</title></rect><rect style="fill:#267761" x="476.37" y="63.35" width="54.75" height="190.65" rx="2"><title>&gt;1.5 m/s · 曾达到的路线占比：83.618 占比（%）</title></rect><rect style="fill:#267761" x="700.37" y="98.43" width="54.75" height="155.57" rx="2"><title>&gt;1.8 m/s · 曾达到的路线占比：68.231 占比（%）</title></rect><text class="axis" x="224.00" y="278" text-anchor="middle">&gt;1 m/s</text><text class="axis" x="448.00" y="278" text-anchor="middle">&gt;1.5 m/s</text><text class="axis" x="672.00" y="278" text-anchor="middle">&gt;1.8 m/s</text><text class="axis-title" x="19" y="140.0" text-anchor="middle" transform="rotate(-90 19 140.0)">占比（%）</text><circle cx="112" cy="318" r="5" fill="#8a979e"/><text class="axis" x="123" y="322">时间占比</text><circle cx="268" cy="318" r="5" fill="#438da0"/><text class="axis" x="279" y="322">距离占比</text><circle cx="424" cy="318" r="5" fill="#267761"/><text class="axis" x="435" y="322">曾达到的路线占比</text></svg><figcaption>三个阈值互相嵌套，不能相加。时间、距离与路线分别使用自己的分母，仅计算当前保留集。</figcaption></figure></div><details><summary>速度区间精确统计与下载</summary><div class="table-wrap"><table><thead><tr><th>速度区间（米/秒）</th><th>区间数</th><th>时间占比</th><th>距离占比</th></tr></thead><tbody><tr><td>≤.01</td><td>29,068</td><td>14.284%</td><td>0.020%</td></tr><tr><td>.01–.05</td><td>5,612</td><td>2.758%</td><td>0.093%</td></tr><tr><td>.05–.2</td><td>10,267</td><td>5.045%</td><td>0.771%</td></tr><tr><td>.2–.4</td><td>28,568</td><td>14.038%</td><td>6.325%</td></tr><tr><td>.4–.6</td><td>27,274</td><td>13.402%</td><td>8.953%</td></tr><tr><td>.6–.8</td><td>19,981</td><td>9.818%</td><td>9.308%</td></tr><tr><td>.8–1</td><td>21,333</td><td>10.483%</td><td>12.790%</td></tr><tr><td>1–1.2</td><td>17,251</td><td>8.477%</td><td>12.460%</td></tr><tr><td>1.2–1.4</td><td>9,687</td><td>4.760%</td><td>8.335%</td></tr><tr><td>1.4–1.6</td><td>7,718</td><td>3.793%</td><td>7.703%</td></tr><tr><td>1.6–1.8</td><td>7,771</td><td>3.819%</td><td>8.765%</td></tr><tr><td>1.8–2</td><td>18,976</td><td>9.325%</td><td>24.477%</td></tr><tr><td>>2</td><td>0</td><td>0.000%</td><td>0.000%</td></tr></tbody></table></div></details><p>超过该路线实际速度约束 1% 容差的区间：0。这项区间速度检查不替代完整动力学约束，也不把较高速度本身视为异常。</p></section><section id="space"><h2>当前路线的场景覆盖与重复</h2><p>完整绑定 NavMesh 的 0.25 米网格；仅评价地图内可通行空间，不代表真实办公室总面积。 轨迹按本次实际机器人半径膨胀并裁剪到绑定 NavMesh；网格按真实表面高度分开，0.5 米高度匹配容差。实际半径逐场景读取合同并核验，不把预膨胀 NavMesh 的 Recast 半径当作机器人半径。</p><div class="table-wrap"><table><thead><tr><th>场景</th><th>可通行网格面积</th><th>轨迹膨胀覆盖</th><th>1 米附近到访覆盖</th><th>同向近重复对</th></tr></thead><tbody><tr><td>深圳办公室</td><td>1278.69 m²</td><td>93.83%</td><td>98.69%</td><td>4</td></tr></tbody></table></div><p>当前保留集的面积加权轨迹膨胀覆盖为 93.83%，周边 1 米到访覆盖为 98.69%。地图分母保持完整可通行区域，不因删掉路线而缩小；两种半径表达不同的利用尺度。</p><div class="charts"><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-retained.svg" alt="深圳办公室：过滤后覆盖 93.83%。仅使用当前保留集；子集展示不是最优选样或新的过滤方案。" style="width:100%;height:auto"><figcaption>深圳办公室：过滤后覆盖 93.83%。仅使用当前保留集；子集展示不是最优选样或新的过滤方案。</figcaption></figure><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-reuse.svg" alt="深圳办公室：过滤后通道使用频次；颜色越深，经过的不同轨迹越多。仅使用当前保留集；子集展示不是最优选样或新的过滤方案。" style="width:100%;height:auto"><figcaption>深圳办公室：过滤后通道使用频次；颜色越深，经过的不同轨迹越多。仅使用当前保留集；子集展示不是最优选样或新的过滤方案。</figcaption></figure><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-sample5.svg" alt="深圳办公室：固定顺序取 176 条（5%），覆盖 53.20%。仅使用当前保留集；子集展示不是最优选样或新的过滤方案。" style="width:100%;height:auto"><figcaption>深圳办公室：固定顺序取 176 条（5%），覆盖 53.20%。仅使用当前保留集；子集展示不是最优选样或新的过滤方案。</figcaption></figure><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-sample25.svg" alt="深圳办公室：固定顺序取 879 条（25%），覆盖 79.72%。仅使用当前保留集；子集展示不是最优选样或新的过滤方案。" style="width:100%;height:auto"><figcaption>深圳办公室：固定顺序取 879 条（25%），覆盖 79.72%。仅使用当前保留集；子集展示不是最优选样或新的过滤方案。</figcaption></figure><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-sample50.svg" alt="深圳办公室：固定顺序取 1758 条（50%），覆盖 87.65%。仅使用当前保留集；子集展示不是最优选样或新的过滤方案。" style="width:100%;height:auto"><figcaption>深圳办公室：固定顺序取 1758 条（50%），覆盖 87.65%。仅使用当前保留集；子集展示不是最优选样或新的过滤方案。</figcaption></figure></div><h3>共享走廊不等于整条路线重复</h3><p>当前共有 4 对同向近重复，其中 1 对目标物相同。判定同时要求：同向起终点各≤0.5米、长度比≥0.9、膨胀通道 IoU≥80%、短路线包含率≥90%、进度对应点 P95 距离≤0.35米。这里只展示复核证据，没有追加去重或扩大删样。</p><div class="charts"><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-pair0.svg" alt="深圳办公室 · 同向近重复：通道 IoU 89.3%，较短路线包含率 94.3%，沿程对应点 P95 距离 0.19 米。目标物不同，不能仅因路径重合视为相同任务。" style="width:100%;height:auto"><figcaption>深圳办公室 · 同向近重复：通道 IoU 89.3%，较短路线包含率 94.3%，沿程对应点 P95 距离 0.19 米。目标物不同，不能仅因路径重合视为相同任务。</figcaption></figure><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-pair1.svg" alt="深圳办公室 · 同向近重复：通道 IoU 87.5%，较短路线包含率 93.9%，沿程对应点 P95 距离 0.26 米。目标物不同，不能仅因路径重合视为相同任务。" style="width:100%;height:auto"><figcaption>深圳办公室 · 同向近重复：通道 IoU 87.5%，较短路线包含率 93.9%，沿程对应点 P95 距离 0.26 米。目标物不同，不能仅因路径重合视为相同任务。</figcaption></figure><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-pair2.svg" alt="深圳办公室 · 同向近重复：通道 IoU 86.7%，较短路线包含率 92.9%，沿程对应点 P95 距离 0.27 米。目标物相同。" style="width:100%;height:auto"><figcaption>深圳办公室 · 同向近重复：通道 IoU 86.7%，较短路线包含率 92.9%，沿程对应点 P95 距离 0.27 米。目标物相同。</figcaption></figure><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-pair3.svg" alt="深圳办公室 · 接近阈值但不算重复：通道 IoU 80.7%，较短路线包含率 89.6%，沿程对应点 P95 距离 0.30 米。目标物不同，不能仅因路径重合视为相同任务。未计为重复的原因：包含率 89.6% &lt; 90%。" style="width:100%;height:auto"><figcaption>深圳办公室 · 接近阈值但不算重复：通道 IoU 80.7%，较短路线包含率 89.6%，沿程对应点 P95 距离 0.30 米。目标物不同，不能仅因路径重合视为相同任务。未计为重复的原因：包含率 89.6% &lt; 90%。</figcaption></figure><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-pair4.svg" alt="深圳办公室 · 接近阈值但不算重复：通道 IoU 80.2%，较短路线包含率 89.0%，沿程对应点 P95 距离 0.34 米。目标物相同。未计为重复的原因：包含率 89.0% &lt; 90%。" style="width:100%;height:auto"><figcaption>深圳办公室 · 接近阈值但不算重复：通道 IoU 80.2%，较短路线包含率 89.0%，沿程对应点 P95 距离 0.34 米。目标物相同。未计为重复的原因：包含率 89.0% &lt; 90%。</figcaption></figure><figure class="chart"><img loading="lazy" src="assets/shenzhen_office_v5_20260916_semantic-pair5.svg" alt="深圳办公室 · 接近阈值但不算重复：通道 IoU 85.4%，较短路线包含率 93.8%，沿程对应点 P95 距离 0.38 米。目标物不同，不能仅因路径重合视为相同任务。未计为重复的原因：沿程 P95 距离 0.376 米 &gt; 0.35 米。" style="width:100%;height:auto"><figcaption>深圳办公室 · 接近阈值但不算重复：通道 IoU 85.4%，较短路线包含率 93.8%，沿程对应点 P95 距离 0.38 米。目标物不同，不能仅因路径重合视为相同任务。未计为重复的原因：沿程 P95 距离 0.376 米 &gt; 0.35 米。</figcaption></figure></div></section><section id="quality"><h2>质量与检查边界</h2><p>当前路线对应首中末 10,548 帧正式检查、约 1 Hz 的 106,138 帧补充检查；正式解码失败 0 条，补充解码失败 0 条。重点抽帧复核涉及当前保留集 0 条，不扩大为全量逐条看片结论。</p><div class="table-wrap"><table><thead><tr><th>现行条件</th><th>当前最大值</th><th>命中条数</th></tr></thead><tbody><tr><td>三帧抽检最大连片近黑区域 &gt;10%</td><td>3.168 %</td><td>0</td></tr><tr><td>扩展末段左右抵消 &gt;10°</td><td>4.728 °</td><td>0</td></tr><tr><td>扩展末段累计转向 &gt;95°</td><td>74.903 °</td><td>0</td></tr><tr><td>最后 2 秒净转向 &gt;180°</td><td>54.118 °</td><td>0</td></tr><tr><td>末 5 秒相机夹角 &gt;45° 累计 ≥1秒（速度 &gt;0.05m/s）</td><td>0.000 秒</td><td>0</td></tr></tbody></table></div><p>扩展末段取最后 2 秒与最后 1 米中较长的一段；累计转角不等于瞬时急转。左右抵消按累计绝对转角减去净转角绝对值计算，转向之间的平移不重置累计。相机夹角使用实际光轴外参，只统计移动中的偏离。</p><figure class="chart"><h3>当前保留集参考评分（0–10）</h3><svg viewBox="0 0 760 306" role="img" aria-label="当前保留集参考评分（0–10）柱状图"><line class="grid-line" x1="64" x2="746" y1="234.00" y2="234.00"/><text class="axis" x="58" y="238.00" text-anchor="end">0%</text><line class="grid-line" x1="64" x2="746" y1="181.50" y2="181.50"/><text class="axis" x="58" y="185.50" text-anchor="end">21.25%</text><line class="grid-line" x1="64" x2="746" y1="129.00" y2="129.00"/><text class="axis" x="58" y="133.00" text-anchor="end">42.5%</text><line class="grid-line" x1="64" x2="746" y1="76.50" y2="76.50"/><text class="axis" x="58" y="80.50" text-anchor="end">63.75%</text><line class="grid-line" x1="64" x2="746" y1="24.00" y2="24.00"/><text class="axis" x="58" y="28.00" text-anchor="end">85%</text><line class="axis-line" x1="64" x2="746" y1="234" y2="234"/><line class="axis-line" x1="64" x2="64" y1="24" y2="234"/><rect x="68.00" y="234.00" width="77.25" height="0.00" rx="4"><title>≤7：0 个（0.000%）</title></rect><text class="bar-value" x="106.62" y="229.00" text-anchor="middle">0.0%</text><text class="axis" x="106.62" y="272" text-anchor="middle">≤7</text><rect x="153.25" y="234.00" width="77.25" height="0.00" rx="4"><title>7–8：0 个（0.000%）</title></rect><text class="bar-value" x="191.88" y="229.00" text-anchor="middle">0.0%</text><text class="axis" x="191.88" y="272" text-anchor="middle">7–8</text><rect x="238.50" y="234.00" width="77.25" height="0.00" rx="4"><title>8–9：0 个（0.000%）</title></rect><text class="bar-value" x="277.12" y="229.00" text-anchor="middle">0.0%</text><text class="axis" x="277.12" y="272" text-anchor="middle">8–9</text><rect x="323.75" y="230.28" width="77.25" height="3.72" rx="4"><title>9–9.5：53 个（1.507%）</title></rect><text class="bar-value" x="362.38" y="225.28" text-anchor="middle">1.5%</text><text class="axis" x="362.38" y="272" text-anchor="middle">9–9.5</text><rect x="409.00" y="221.56" width="77.25" height="12.44" rx="4"><title>9.5–9.7：177 个（5.034%）</title></rect><text class="bar-value" x="447.62" y="216.56" text-anchor="middle">5.0%</text><text class="axis" x="447.62" y="272" text-anchor="middle">9.5–9.7</text><rect x="494.25" y="218.26" width="77.25" height="15.74" rx="4"><title>9.7–9.8：224 个（6.371%）</title></rect><text class="bar-value" x="532.88" y="213.26" text-anchor="middle">6.4%</text><text class="axis" x="532.88" y="272" text-anchor="middle">9.7–9.8</text><rect x="579.50" y="27.27" width="77.25" height="206.73" rx="4"><title>9.8–9.9：2,942 个（83.675%）</title></rect><text class="bar-value" x="618.12" y="35.00" text-anchor="middle">83.7%</text><text class="axis" x="618.12" y="272" text-anchor="middle">9.8–9.9</text><rect x="664.75" y="225.57" width="77.25" height="8.43" rx="4"><title>&gt;9.9：120 个（3.413%）</title></rect><text class="bar-value" x="703.38" y="220.57" text-anchor="middle">3.4%</text><text class="axis" x="703.38" y="272" text-anchor="middle">&gt;9.9</text><text class="axis-title" x="405.00" y="302" text-anchor="middle">数值区间</text><text class="axis-title" x="16" y="129.00" text-anchor="middle" transform="rotate(-90 16 129.00)">区间占比</text></svg><figcaption>均分 9.828，最低 9.09，最高 10.00。分数沿用筛选前的同一公式，没有按保留集重新拉伸；按这些指标选样之后分布变高属于筛选结果，不能独立证明真实质量提升。</figcaption></figure><p>异常召回率和误杀率没有全量人工真值支撑，仍不提供伪精确数值。已删除本轮全部疑点，并不意味着每条剩余视频都经过人工观看；后续随机抽查仍可发现指标未覆盖的问题。</p></section><section id="examples"><h2>正常候选与当前范围上沿</h2><p>样例全部来自当前白名单：包含短、中、中长、长路线，以及保留集末段转角、抵消和速度较高的边界。边界代表当前分布上沿，不等于新增异常分类。默认 4 倍速，可选 8 倍速及最后 10 秒。</p><article class="example" id="case-example-01">
+      <span class="example-role">正常候选 · 短路线</span>
+      <h3>深圳办公室 · kitchen · 参考分 10.00/10</h3>
+      <div class="example-facts"><span>路径 4.5 米</span><span>视频 11.5 秒</span>
+      <span>末段抵消 0.00°</span><span>末段累计转向 26.9°</span>
+      <span>末 2 秒净转向 12.4°</span><span>末 5 秒视野偏离 0.0 秒</span></div>
+      <p>Navigate to the kitchen.</p><p class="diagnosis">未触发现行过滤和疑点指标，作为同场景、不同长度的正常候选对照；未做逐条人工验收。</p>
+      <div class="example-media"><div><video id="v-example-01" controls preload="none" playsinline src="assets/videos/example-01.mp4"></video>
+      <button class="jump" data-video="v-example-01" data-offset="10" data-time="1.5">只看最后 10 秒</button>
+      <label>倍速 <select class="rate" data-video="v-example-01"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label>
+      <p class="media-note">默认 4 倍速，可拖动进度条。<span class="public-local-note">完整人工质检台仅限内网访问</span></p></div>
+      <figure style="margin:0"><img loading="lazy" src="assets/example-01-route.svg" alt="真实 NavMesh 中的该条轨迹">
+      <figcaption>本轮真实 NavMesh；绿色起点，紫色终点，红框目标包围盒。地图等比例投影，线宽固定。动态机器人位置在人工台同步显示。</figcaption></figure></div>
+      <details><summary>数据编号与评分依据</summary><code>example-01</code><p>无额外扣分线索</p>
+      <p></p></details></article><article class="example" id="case-example-02">
+      <span class="example-role">正常候选 · 中路线</span>
+      <h3>深圳办公室 · office · 参考分 10.00/10</h3>
+      <div class="example-facts"><span>路径 14.4 米</span><span>视频 13.5 秒</span>
+      <span>末段抵消 0.00°</span><span>末段累计转向 10.4°</span>
+      <span>末 2 秒净转向 10.4°</span><span>末 5 秒视野偏离 0.0 秒</span></div>
+      <p>Navigate to the office.</p><p class="diagnosis">未触发现行过滤和疑点指标，作为同场景、不同长度的正常候选对照；未做逐条人工验收。</p>
+      <div class="example-media"><div><video id="v-example-02" controls preload="none" playsinline src="assets/videos/example-02.mp4"></video>
+      <button class="jump" data-video="v-example-02" data-offset="10" data-time="3.5">只看最后 10 秒</button>
+      <label>倍速 <select class="rate" data-video="v-example-02"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label>
+      <p class="media-note">默认 4 倍速，可拖动进度条。<span class="public-local-note">完整人工质检台仅限内网访问</span></p></div>
+      <figure style="margin:0"><img loading="lazy" src="assets/example-02-route.svg" alt="真实 NavMesh 中的该条轨迹">
+      <figcaption>本轮真实 NavMesh；绿色起点，紫色终点，红框目标包围盒。地图等比例投影，线宽固定。动态机器人位置在人工台同步显示。</figcaption></figure></div>
+      <details><summary>数据编号与评分依据</summary><code>example-02</code><p>无额外扣分线索</p>
+      <p></p></details></article><article class="example" id="case-example-03">
+      <span class="example-role">正常候选 · 中长路线</span>
+      <h3>深圳办公室 · kitchen · 参考分 10.00/10</h3>
+      <div class="example-facts"><span>路径 29.8 米</span><span>视频 36.0 秒</span>
+      <span>末段抵消 0.00°</span><span>末段累计转向 0.0°</span>
+      <span>末 2 秒净转向 0.0°</span><span>末 5 秒视野偏离 0.0 秒</span></div>
+      <p>Navigate to the kitchen.</p><p class="diagnosis">未触发现行过滤和疑点指标，作为同场景、不同长度的正常候选对照；未做逐条人工验收。</p>
+      <div class="example-media"><div><video id="v-example-03" controls preload="none" playsinline src="assets/videos/example-03.mp4"></video>
+      <button class="jump" data-video="v-example-03" data-offset="10" data-time="26.0">只看最后 10 秒</button>
+      <label>倍速 <select class="rate" data-video="v-example-03"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label>
+      <p class="media-note">默认 4 倍速，可拖动进度条。<span class="public-local-note">完整人工质检台仅限内网访问</span></p></div>
+      <figure style="margin:0"><img loading="lazy" src="assets/example-03-route.svg" alt="真实 NavMesh 中的该条轨迹">
+      <figcaption>本轮真实 NavMesh；绿色起点，紫色终点，红框目标包围盒。地图等比例投影，线宽固定。动态机器人位置在人工台同步显示。</figcaption></figure></div>
+      <details><summary>数据编号与评分依据</summary><code>example-03</code><p>无额外扣分线索</p>
+      <p></p></details></article><article class="example" id="case-example-04">
+      <span class="example-role">正常候选 · 长路线</span>
+      <h3>深圳办公室 · office · 参考分 10.00/10</h3>
+      <div class="example-facts"><span>路径 46.1 米</span><span>视频 52.5 秒</span>
+      <span>末段抵消 0.00°</span><span>末段累计转向 0.0°</span>
+      <span>末 2 秒净转向 0.0°</span><span>末 5 秒视野偏离 0.0 秒</span></div>
+      <p>Navigate to the office.</p><p class="diagnosis">未触发现行过滤和疑点指标，作为同场景、不同长度的正常候选对照；未做逐条人工验收。</p>
+      <div class="example-media"><div><video id="v-example-04" controls preload="none" playsinline src="assets/videos/example-04.mp4"></video>
+      <button class="jump" data-video="v-example-04" data-offset="10" data-time="42.5">只看最后 10 秒</button>
+      <label>倍速 <select class="rate" data-video="v-example-04"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label>
+      <p class="media-note">默认 4 倍速，可拖动进度条。<span class="public-local-note">完整人工质检台仅限内网访问</span></p></div>
+      <figure style="margin:0"><img loading="lazy" src="assets/example-04-route.svg" alt="真实 NavMesh 中的该条轨迹">
+      <figcaption>本轮真实 NavMesh；绿色起点，紫色终点，红框目标包围盒。地图等比例投影，线宽固定。动态机器人位置在人工台同步显示。</figcaption></figure></div>
+      <details><summary>数据编号与评分依据</summary><code>example-04</code><p>无额外扣分线索</p>
+      <p></p></details></article><article class="example" id="case-example-05">
+      <span class="example-role">保留集上沿 · 末段左右抵消</span>
+      <h3>深圳办公室 · desk · 参考分 9.09/10</h3>
+      <div class="example-facts"><span>路径 23.5 米</span><span>视频 29.0 秒</span>
+      <span>末段抵消 4.73°</span><span>末段累计转向 65.9°</span>
+      <span>末 2 秒净转向 2.4°</span><span>末 5 秒视野偏离 0.0 秒</span></div>
+      <p>Navigate to the desk.</p><p class="diagnosis">未触发现行过滤和疑点指标，作为同场景、不同长度的正常候选对照；未做逐条人工验收。</p>
+      <div class="example-media"><div><video id="v-example-05" controls preload="none" playsinline src="assets/videos/example-05.mp4"></video>
+      <button class="jump" data-video="v-example-05" data-offset="10" data-time="19.0">只看最后 10 秒</button>
+      <label>倍速 <select class="rate" data-video="v-example-05"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label>
+      <p class="media-note">默认 4 倍速，可拖动进度条。<span class="public-local-note">完整人工质检台仅限内网访问</span></p></div>
+      <figure style="margin:0"><img loading="lazy" src="assets/example-05-route.svg" alt="真实 NavMesh 中的该条轨迹">
+      <figcaption>本轮真实 NavMesh；绿色起点，紫色终点，红框目标包围盒。地图等比例投影，线宽固定。动态机器人位置在人工台同步显示。</figcaption></figure></div>
+      <details><summary>数据编号与评分依据</summary><code>example-05</code><p>末段左右调整较多；末段转向较集中</p>
+      <p></p></details></article><article class="example" id="case-example-06">
+      <span class="example-role">保留集上沿 · 末段累计转向</span>
+      <h3>深圳办公室 · desk · 参考分 9.44/10</h3>
+      <div class="example-facts"><span>路径 24.5 米</span><span>视频 45.5 秒</span>
+      <span>末段抵消 0.00°</span><span>末段累计转向 74.9°</span>
+      <span>末 2 秒净转向 0.0°</span><span>末 5 秒视野偏离 0.0 秒</span></div>
+      <p>Navigate to the desk.</p><p class="diagnosis">未触发现行过滤和疑点指标，作为同场景、不同长度的正常候选对照；未做逐条人工验收。</p>
+      <div class="example-media"><div><video id="v-example-06" controls preload="none" playsinline src="assets/videos/example-06.mp4"></video>
+      <button class="jump" data-video="v-example-06" data-offset="10" data-time="35.5">只看最后 10 秒</button>
+      <label>倍速 <select class="rate" data-video="v-example-06"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label>
+      <p class="media-note">默认 4 倍速，可拖动进度条。<span class="public-local-note">完整人工质检台仅限内网访问</span></p></div>
+      <figure style="margin:0"><img loading="lazy" src="assets/example-06-route.svg" alt="真实 NavMesh 中的该条轨迹">
+      <figcaption>本轮真实 NavMesh；绿色起点，紫色终点，红框目标包围盒。地图等比例投影，线宽固定。动态机器人位置在人工台同步显示。</figcaption></figure></div>
+      <details><summary>数据编号与评分依据</summary><code>example-06</code><p>末段转向较集中</p>
+      <p></p></details></article><article class="example" id="case-example-07">
+      <span class="example-role">保留集上沿 · 最高区间速度</span>
+      <h3>深圳办公室 · door · 参考分 9.72/10</h3>
+      <div class="example-facts"><span>路径 20.1 米</span><span>视频 20.0 秒</span>
+      <span>末段抵消 0.00°</span><span>末段累计转向 44.4°</span>
+      <span>末 2 秒净转向 4.9°</span><span>末 5 秒视野偏离 0.0 秒</span></div>
+      <p>Navigate to the door.</p><p class="diagnosis">未触发现行过滤和疑点指标，作为同场景、不同长度的正常候选对照；未做逐条人工验收。</p>
+      <div class="example-media"><div><video id="v-example-07" controls preload="none" playsinline src="assets/videos/example-07.mp4"></video>
+      <button class="jump" data-video="v-example-07" data-offset="10" data-time="10.0">只看最后 10 秒</button>
+      <label>倍速 <select class="rate" data-video="v-example-07"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label>
+      <p class="media-note">默认 4 倍速，可拖动进度条。<span class="public-local-note">完整人工质检台仅限内网访问</span></p></div>
+      <figure style="margin:0"><img loading="lazy" src="assets/example-07-route.svg" alt="真实 NavMesh 中的该条轨迹">
+      <figcaption>本轮真实 NavMesh；绿色起点，紫色终点，红框目标包围盒。地图等比例投影，线宽固定。动态机器人位置在人工台同步显示。</figcaption></figure></div>
+      <details><summary>数据编号与评分依据</summary><code>example-07</code><p>无额外扣分线索</p>
+      <p></p></details></article></section><section id="method"><h2>口径与复用</h2><p>冻结采集文件未修改。本页统计分母均为当前白名单；仅“筛除摘要”保留筛选前后的对照。运动和视频指标使用本批源文件的实测结果，空间覆盖按白名单重算，地图分母不变。</p><p>参考评分按运动 30%、末段动作 30%、视频 25%、目标证据 15% 加权。筛选后没有重新拉伸分数或追加新阈值。原始语义预检不等于最终 RGB 画面的逐条人工确认。</p><p><a href="statistics.html">完整范围统计 →</a> · <span class="public-local-note">逐轨迹评分明细仅限内网访问</span> · <a href="selection.json" download>筛选口径与证据路径 JSON</a></p></section></main><footer>深圳办公室 V17 · 指标筛选后的保留集；自动检查与人工验收分开表述。</footer>
+<script>
+document.querySelectorAll('.jump').forEach(button => button.addEventListener('click', () => {
+  const video = document.getElementById(button.dataset.video);
+  if (!video) return;
+  const seekAndPlay = () => {
+    const offset = Number(button.dataset.offset || 5);
+    const fallback = Number(button.dataset.time || 0);
+    const duration = Number.isFinite(video.duration) ? video.duration : null;
+    const target = Math.max(0, duration === null ? fallback : duration - offset);
+    const play = () => {
+      const promise = video.play();
+      if (promise) promise.catch(() => {});
+    };
+    video.pause();
+    if (Math.abs(video.currentTime - target) < 0.05) {
+      play();
+      return;
+    }
+    video.addEventListener('seeked', play, { once: true });
+    video.currentTime = target;
+  };
+  if (video.readyState >= 1) {
+    seekAndPlay();
+  } else {
+    video.addEventListener('loadedmetadata', seekAndPlay, { once: true });
+    video.load();
+  }
+}));
+
+document.querySelectorAll('.id-list').forEach(d => d.addEventListener('toggle', async () => {
+  if (!d.open || d.dataset.loaded) return;
+  const p=d.querySelector('pre'); p.textContent='正在加载完整编号…';
+  try {const r=await fetch(d.dataset.src);if(!r.ok)throw Error(r.status);p.textContent=(await r.text())||'无符合项';d.dataset.loaded='1';}
+  catch(e){p.textContent='加载失败，可通过上方链接下载完整编号。';}
+}));
+document.querySelectorAll('video').forEach(v=>v.addEventListener('play',()=>document.querySelectorAll('video').forEach(o=>{if(o!==v)o.pause();})));
+</script>
+<script>
+document.querySelectorAll('video').forEach(v=>{v.defaultPlaybackRate=4;v.playbackRate=4;v.addEventListener('loadedmetadata',()=>{v.playbackRate=Number(document.querySelector(`select[data-video="${v.id}"]`).value);});});
+document.querySelectorAll('select.rate').forEach(s=>s.addEventListener('change',()=>{document.getElementById(s.dataset.video).playbackRate=Number(s.value);}));
+</script></body>
+</html>
