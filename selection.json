@@ -1,0 +1,22 @@
+{
+  "schema": "office_qc_frozen_whitelist_selection_public_v1",
+  "source_count": 4008,
+  "source_hours": 33.02166666666667,
+  "removed_count": 492,
+  "removed_hours": 4.268611111111111,
+  "retained_count": 3516,
+  "retained_hours": 28.753055555555555,
+  "decision_text": "质量分低于 8 的路线与既有可疑队列按 ID 取并集排除；统计、示例与动作编码均只使用剩余数据。",
+  "removed_reason_counts": {
+    "质量分低于 8": 119,
+    "既有可疑队列": 390,
+    "两类重合": 17,
+    "去重后排除": 492
+  },
+  "selection_provenance": {
+    "mode": "frozen_upstream_whitelist",
+    "upstream_allowlist_count": 4008,
+    "upstream_allowlist_sha256": "34e7c408fdb06cf1403154513700c6d980b568058a581fc97a8b03f42bcaec1d",
+    "frozen_routes_sha256": "2a2bc5f172f0e4da6b77bebcba9ea01272e73cc841b8b39cff0e488fb4ef939e"
+  }
+}

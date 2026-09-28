@@ -1,0 +1,47 @@
+{
+  "schema": "office_qc_frozen_whitelist_dataset_public_v1",
+  "trajectory_count": 3516,
+  "removed_count": 492,
+  "routes": "train/routes.jsonl.gz",
+  "shards": "shards/train",
+  "shard_count": 1001,
+  "videos": "videos",
+  "planner": "planner_output_v2",
+  "checks": {
+    "all_actions_recomputable_from_body_deltas": true,
+    "all_shard_tokens_match_sidecars": true,
+    "all_sidecars_tokenized": true,
+    "all_symlinks_resolve": true,
+    "blacklist_ids_absent": true,
+    "routes_equal_shards_equal_whitelist": true,
+    "sidecar_count": 3516,
+    "video_count": 3516,
+    "all_assets_materialized": true,
+    "all_asset_paths_relative": true,
+    "all_dataset_files_mode": "0666",
+    "all_dataset_directories_mode": "0777"
+  },
+  "asset_storage": "Videos and Planner sidecars are materialized regular files in this dataset export.",
+  "semantic_contract": "Only IDs admitted by this QC selection are exported; frozen routes and source-run semantics are unchanged.",
+  "purpose": "Filtered analysis/training inputs, not a resumable collector run; original state.sqlite remains an immutable collection log.",
+  "selection_provenance": {
+    "mode": "frozen_upstream_whitelist",
+    "upstream_allowlist_count": 4008,
+    "upstream_allowlist_sha256": "34e7c408fdb06cf1403154513700c6d980b568058a581fc97a8b03f42bcaec1d",
+    "frozen_routes_sha256": "2a2bc5f172f0e4da6b77bebcba9ea01272e73cc841b8b39cff0e488fb4ef939e"
+  },
+  "tokenization": {
+    "action_alignment": "actions[0:-1] encode body_deltas[1:]; actions[-1] is STOP=0",
+    "codebook": "codebook-k64.json",
+    "codebook_file_sha256": "d4ffeff7c4c6581b0dbe13418986ddec1ec15742e97b78a4e8d8b331e7c74148",
+    "codebook_identity_sha256": "6d4c347b468f6c8832f5889cfc0516019608fda0ef6615b9bf4d157a79f50f32",
+    "motion_token_count": 203506,
+    "motion_token_range": [
+      1,
+      64
+    ],
+    "sample_hz": 2.0,
+    "stop_token_id": 0,
+    "terminal_stop_count": 3516
+  }
+}
